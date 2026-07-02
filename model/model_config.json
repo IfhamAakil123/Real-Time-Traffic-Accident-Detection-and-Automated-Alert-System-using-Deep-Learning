@@ -1,0 +1,11 @@
+{
+  "threshold": 0.5,
+  "img_size": [
+    224,
+    224
+  ],
+  "class_indices": {
+    "accident": 0,
+    "non_accident": 1
+  }
+}

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — AccidentDetect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #080b12;
+      --surface: #0f1320;
+      --glass:   rgba(255,255,255,0.04);
+      --border:  rgba(255,255,255,0.08);
+      --accent:  #e63946;
+      --green:   #2ec4b6;
+      --text:    #eef0f6;
+      --muted:   #6b7694;
+      --sans:    'Inter', sans-serif;
+      --mono:    'Space Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,11,18,0.8); backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), #a31621);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 12px; font-weight: 700; color: #fff;
+      box-shadow: 0 0 14px rgba(230,57,70,0.35);
+    }
+    .logo-name { font-weight: 700; font-size: 0.95rem; }
+    .logo-tag  { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+    .btn-back {
+      background: var(--glass); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 8px 16px;
+      font-family: var(--sans); font-size: 13px; cursor: pointer;
+      text-decoration: none; transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .page {
+      max-width: 600px; margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    .page-title {
+      font-size: 1.4rem; font-weight: 700; margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff 40%, #7a82a8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .page-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 28px; }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px 22px; margin-bottom: 24px;
+    }
+    .form-card h3 { font-size: 11px; font-family: var(--mono); letter-spacing: 2px; text-transform: uppercase; color: var(--text); margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .form-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.6; margin-bottom: 22px; }
+
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--muted); margin-bottom: 7px; }
+    .field input {
+      width: 100%; padding: 10px 14px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-size: 0.9rem; font-family: var(--sans); outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: rgba(255,255,255,0.18); }
+    .field-hint { margin-top: 5px; font-size: 0.76rem; color: var(--muted); }
+
+    .save-btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, var(--accent), #a31621);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 600; font-family: var(--sans);
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 8px 24px rgba(230,57,70,0.25);
+      margin-top: 10px;
+    }
+    .save-btn:hover  { opacity: 0.9; }
+    .save-btn:active { transform: scale(0.98); }
+
+    /* ── Flash ── */
+    .flash-wrap { margin-bottom: 18px; }
+    .flash {
+      padding: 12px 16px; border-radius: 10px; font-size: 0.88rem;
+    }
+    .flash.success { background: rgba(46,196,182,0.1); border: 1px solid rgba(46,196,182,0.25); color: #81e6d9; }
+    .flash.error   { background: rgba(230,57,70,0.1);  border: 1px solid rgba(230,57,70,0.25);  color: #fca5a5; }
+
+    /* ── Status pill ── */
+    .status { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-family: var(--mono); margin-left: 8px; vertical-align: middle; }
+    .status.ok { background: rgba(46,196,182,0.1); color: var(--green); }
+    .status.missing { background: rgba(230,57,70,0.1); color: var(--accent); }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">
+    <div class="logo-icon">AD</div>
+    <div>
+      <div class="logo-name">AccidentDetect</div>
+      <div class="logo-tag">Road Safety AI</div>
+    </div>
+  </a>
+  <a href="/" class="btn-back">← Back</a>
+</header>
+
+<div class="page">
+
+  <div class="page-title">⚙️ Notification Settings</div>
+  <div class="page-sub">Configure your Gmail and Twilio credentials for accident alerts.</div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="/settings">
+
+    <!-- Email Card -->
+    <div class="form-card">
+      <h3>📧 Email Settings (Gmail)
+        {% if cfg.sender and cfg.password %}<span class="status ok">CONFIGURED</span>{% else %}<span class="status missing">NOT CONFIGURED</span>{% endif %}
+      </h3>
+      <p class="form-desc">Used to send email alerts with evidence attachments.</p>
+
+      <div class="field">
+        <label for="sender">Sender Gmail address</label>
+        <input type="email" id="sender" name="sender"
+               placeholder="yourgmail@gmail.com"
+               value="{{ cfg.sender }}" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label for="password">Gmail App Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="{{ '••••••••••••••••  (already saved)' if cfg.password else 'xxxx xxxx xxxx xxxx' }}"
+               autocomplete="new-password">
+        <div class="field-hint">Leave blank to keep the existing saved password.</div>
+      </div>
+    </div>
+
+    <!-- Twilio Card -->
+    <div class="form-card">
+      <h3>💬 WhatsApp & SMS Settings (Twilio)
+        {% if cfg.twilio_sid and cfg.twilio_token %}<span class="status ok">CONFIGURED</span>{% else %}<span class="status missing">NOT CONFIGURED</span>{% endif %}
+      </h3>
+      <p class="form-desc">Required to send instant WhatsApp and SMS alerts to the phone number provided during upload.</p>
+
+      <div class="field">
+        <label for="twilio_sid">Twilio Account SID</label>
+        <input type="text" id="twilio_sid" name="twilio_sid"
+               placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+               value="{{ cfg.twilio_sid }}">
+      </div>
+
+      <div class="field">
+        <label for="twilio_token">Twilio Auth Token</label>
+        <input type="password" id="twilio_token" name="twilio_token"
+               placeholder="{{ '••••••••••••••••  (already saved)' if cfg.twilio_token else 'Your Auth Token' }}">
+        <div class="field-hint">Leave blank to keep the existing saved token.</div>
+      </div>
+
+      <div class="field">
+        <label for="twilio_phone">Twilio Phone Number (For SMS)</label>
+        <input type="text" id="twilio_phone" name="twilio_phone"
+               placeholder="+1234567890" value="{{ cfg.twilio_phone }}">
+      </div>
+
+      <div class="field">
+        <label for="twilio_whatsapp">Twilio WhatsApp Number</label>
+        <input type="text" id="twilio_whatsapp" name="twilio_whatsapp"
+               placeholder="whatsapp:+14155238886" value="{{ cfg.twilio_whatsapp }}">
+        <div class="field-hint">Usually 'whatsapp:+14155238886' if using the Twilio Sandbox.</div>
+      </div>
+    </div>
+
+    <button type="submit" class="save-btn">💾 Save All Credentials</button>
+  </form>
+
+</div>
+</body>
+</html>

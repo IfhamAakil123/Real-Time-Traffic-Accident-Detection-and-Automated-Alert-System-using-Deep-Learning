@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AccidentDetect — Road Safety AI</title>
+  <meta name="description" content="Upload a video or image to detect road accidents using AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #080b12;
+      --surface:  #0f1320;
+      --glass:    rgba(255,255,255,0.04);
+      --border:   rgba(255,255,255,0.08);
+      --accent:   #e63946;
+      --accent2:  #ff6b6b;
+      --green:    #2ec4b6;
+      --text:     #eef0f6;
+      --muted:    #6b7694;
+      --sans:     'Inter', sans-serif;
+      --mono:     'Space Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 60px;
+    }
+
+    /* ── Animated background glow ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(230,57,70,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: glow-pulse 6s ease-in-out infinite;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    /* ── Nav ── */
+    nav {
+      width: 100%; max-width: 640px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0 0;
+      position: relative; z-index: 1;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #a31621);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 13px; font-weight: 700; color: #fff;
+      box-shadow: 0 0 18px rgba(230,57,70,0.4);
+    }
+    .logo-name { font-weight: 700; font-size: 1rem; letter-spacing: -0.3px; }
+    .logo-tag  { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+    .nav-links { display: flex; gap: 6px; }
+    .nav-link {
+      padding: 7px 14px; border-radius: 8px;
+      color: var(--muted); font-size: 13px; font-weight: 500;
+      text-decoration: none; transition: color 0.2s, background 0.2s;
+    }
+    .nav-link:hover { color: var(--text); background: var(--glass); }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 52px 0 40px;
+      position: relative; z-index: 1;
+      width: 100%; max-width: 640px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 14px; border-radius: 20px;
+      background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25);
+      font-size: 12px; font-weight: 500; color: var(--accent2);
+      margin-bottom: 22px; letter-spacing: 0.3px;
+    }
+    .hero-badge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    h1 {
+      font-size: clamp(1.9rem, 5vw, 2.6rem);
+      font-weight: 700; letter-spacing: -1px;
+      line-height: 1.15; margin-bottom: 14px;
+      background: linear-gradient(135deg, #fff 30%, #9ba4c0);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1rem; color: var(--muted); line-height: 1.7;
+      max-width: 440px; margin: 0 auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%; max-width: 560px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 36px;
+      backdrop-filter: blur(12px);
+      position: relative; z-index: 1;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 44px 20px;
+      text-align: center; cursor: pointer;
+      transition: border-color 0.25s, background 0.25s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(230,57,70,0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .dz-icon {
+      width: 52px; height: 52px; margin: 0 auto 14px;
+      background: rgba(230,57,70,0.1); border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; transition: transform 0.2s;
+    }
+    .drop-zone:hover .dz-icon { transform: scale(1.08); }
+    .dz-primary { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .dz-sub { font-size: 0.82rem; color: var(--muted); }
+
+    .file-preview {
+      margin-top: 12px; padding: 10px 14px;
+      background: rgba(255,255,255,0.04); border-radius: 10px;
+      font-size: 0.83rem; color: var(--muted); display: none;
+      font-family: var(--mono);
+    }
+
+    /* ── Form fields ── */
+    .field { margin-top: 20px; }
+    .field label {
+      display: block; font-size: 0.85rem; font-weight: 500;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .field select, .field input[type="email"], .field input[type="tel"] {
+      width: 100%; padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-size: 0.9rem; font-family: var(--sans);
+      outline: none; transition: border-color 0.2s;
+      appearance: none;
+    }
+    .field select:focus, .field input[type="email"]:focus, .field input[type="tel"]:focus {
+      border-color: var(--accent);
+    }
+    .field input[type="email"]::placeholder,
+    .field input[type="tel"]::placeholder { color: rgba(255,255,255,0.18); }
+    .field-hint { margin-top: 5px; font-size: 0.76rem; color: var(--muted); }
+
+    /* ── Submit ── */
+    .submit-btn {
+      margin-top: 24px; width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--accent), #a31621);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 600; font-family: var(--sans);
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.2px;
+      box-shadow: 0 8px 24px rgba(230,57,70,0.3);
+    }
+    .submit-btn:hover   { opacity: 0.9; }
+    .submit-btn:active  { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-top: 18px; display: none; }
+    .progress-bar-outer {
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px; height: 5px; overflow: hidden;
+    }
+    .progress-bar-inner {
+      height: 100%; width: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 6px;
+      animation: shimmer 1.8s linear infinite;
+      background-size: 200% 100%;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .progress-label { font-size: 0.8rem; color: var(--muted); margin-top: 10px; text-align: center; }
+
+    /* ── Flash ── */
+    .flash-wrap { width: 100%; max-width: 560px; margin-bottom: 16px; position: relative; z-index: 1; }
+    .flash {
+      padding: 12px 16px; border-radius: 10px;
+      font-size: 0.88rem;
+      background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25);
+      color: #fca5a5;
+    }
+
+    /* ── Real-time detection panel ── */
+    .rt-panel {
+      width: 100%; max-width: 560px;
+      margin-top: 28px;
+      position: relative; z-index: 1;
+    }
+
+    .rt-toggle {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .rt-toggle:hover {
+      color: var(--text);
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+    }
+    .rt-toggle.active {
+      color: var(--green);
+      border-color: rgba(46,196,182,0.3);
+      background: rgba(46,196,182,0.06);
+    }
+
+    .rt-body {
+      display: none;
+      margin-top: 14px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+    .rt-body.open { display: block; }
+
+    .rt-video-wrap {
+      position: relative;
+      width: 100%;
+      background: #000;
+      aspect-ratio: 4/3;
+    }
+    .rt-video-wrap video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .rt-video-wrap canvas {
+      display: none;
+    }
+
+    .rt-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .rt-status {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px;
+      font-weight: 700; letter-spacing: 0.5px;
+    }
+    .rt-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .rt-dot.safe     { background: var(--green); box-shadow: 0 0 10px rgba(46,196,182,0.5); }
+    .rt-dot.danger   { background: var(--accent); box-shadow: 0 0 10px rgba(230,57,70,0.5); }
+    .rt-dot.idle     { background: var(--muted); animation: none; }
+    .rt-prob {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+    }
+
+    .rt-controls {
+      padding: 16px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+    .rt-info {
+      font-size: 12px; color: var(--muted);
+    }
+    .rt-btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--glass);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .rt-btn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .rt-btn.stop {
+      background: rgba(230,57,70,0.12);
+      border-color: rgba(230,57,70,0.3);
+      color: var(--accent);
+    }
+    .rt-btn.stop:hover {
+      background: rgba(230,57,70,0.2);
+    }
+
+    /* ── Bottom bar overlay for danger ── */
+    .rt-danger-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 10px 18px;
+      background: rgba(230,57,70,0.85);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 1px;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+    .rt-danger-bar.show {
+      transform: translateY(0);
+    }
+
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="logo" href="/">
+      <div class="logo-icon">AD</div>
+      <div>
+        <div class="logo-name">AccidentDetect</div>
+        <div class="logo-tag">Road Safety AI</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="/history" class="nav-link">History</a>
+      <a href="/settings" class="nav-link">Settings</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-badge"><span class="dot"></span> AI-Powered Detection</div>
+    <h1>Detect Road Accidents Instantly</h1>
+    <p>Upload a video or image and our MobileNetV2 model will analyse every frame for accident events in seconds.</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap">
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="card">
+    <form id="upload-form" action="/detect" method="POST" enctype="multipart/form-data">
+
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" name="file" id="file-input"
+               accept=".jpg,.jpeg,.png,.bmp,.mp4,.avi,.mov,.mkv,.wmv"
+               onchange="onFileSelected(this)">
+        <div class="dz-icon">📁</div>
+        <div class="dz-primary">Drop file here or click to browse</div>
+        <div class="dz-sub">Videos: MP4, AVI, MOV, MKV &nbsp;|&nbsp; Images: JPG, PNG, BMP</div>
+      </div>
+
+      <div class="file-preview" id="file-preview"></div>
+
+      <div class="field">
+        <label for="sample_every">Sample rate — analyse every N-th frame</label>
+        <select name="sample_every" id="sample_every">
+          <option value="1">1 — Analyze every frame (Live visual processing)</option>
+          <option value="5">Every 5th frame — thorough</option>
+          <option value="10" selected>Every 10th frame — recommended</option>
+          <option value="20">Every 20th frame — fast</option>
+          <option value="30">Every 30th frame — fastest</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="alert_email">📧 Alert email <span style="font-weight:400;">(optional — sent only if accident found)</span></label>
+        <input type="email" name="alert_email" id="alert_email"
+               placeholder="you@example.com" autocomplete="email">
+        <div class="field-hint">Leave blank to skip email alerts. Configure sender in Settings.</div>
+      </div>
+
+      <div class="field">
+        <label for="alert_phone">📱 Alert phone <span style="font-weight:400;">(optional — WhatsApp & SMS)</span></label>
+        <input type="tel" name="alert_phone" id="alert_phone"
+               placeholder="+1234567890" autocomplete="tel">
+        <div class="field-hint">Include country code (e.g. +92…). Requires Twilio credentials in Settings.</div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">Analyse File</button>
+
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner"></div>
+        </div>
+        <div class="progress-label">Processing — please wait, this may take a minute for long videos…</div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ── Visual Processing Modal ── -->
+  <div class="modal-overlay" id="visual-proc-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:200; align-items:center; justify-content:center;">
+    <div class="modal-box" style="max-width:680px; width:95%; padding:24px; text-align:left; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 24px 64px rgba(0,0,0,0.5);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-size:1.15rem; font-weight:700; background:linear-gradient(135deg, #fff, #9ba4c0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Live Frame-by-Frame Processing</h3>
+        <span id="proc-fps-badge" style="font-family:var(--mono); font-size:10px; color:var(--muted); border:1px solid var(--border); padding:3px 8px; border-radius:4px;">Inference Active</span>
+      </div>
+
+      <div style="position:relative; width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border); margin-bottom:18px;">
+        <canvas id="proc-canvas" style="width:100%; height:100%; display:block; object-fit:contain;"></canvas>
+        <div id="proc-warning-bar" style="position:absolute; bottom:0; left:0; right:0; background:rgba(230,57,70,0.9); color:#fff; font-family:var(--mono); font-weight:700; font-size:13px; text-align:center; padding:8px 0; transform:translateY(100%); transition:transform 0.2s;">🚨 ACCIDENT DETECTED (PEAK CONFIDENCE)</div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:10px 14px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Frames</div>
+          <div id="proc-stat-frames" style="font-family:var(--mono); font-size:1.1rem; font-weight:700;">0 / 0</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:10px 14px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Confidence</div>
+          <div id="proc-stat-prob" style="font-family:var(--mono); font-size:1.1rem; font-weight:700; color:var(--green);">0.0%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:10px 14px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Flagged</div>
+          <div id="proc-stat-flagged" style="font-family:var(--mono); font-size:1.1rem; font-weight:700; color:var(--text);">0</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px;">
+          <span>Processing Progress</span>
+          <span id="proc-progress-pct">0%</span>
+        </div>
+        <div style="height:6px; background:var(--border); border-radius:3px; overflow:hidden;">
+          <div id="proc-progress-fill" style="width:0%; height:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); border-radius:3px; transition:width 0.1s;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="modal-btn cancel" id="proc-cancel-btn" style="padding:10px 24px; border-radius:10px; font-family:var(--sans); font-size:0.88rem; font-weight:600; cursor:pointer; transition:opacity 0.2s, transform 0.15s; border:1px solid var(--border); background:var(--glass); color:var(--muted);" onclick="abortVisualProcessing()">Cancel Analysis</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Real-time Detection Panel ── -->
+  <div class="rt-panel">
+    <button class="rt-toggle" id="rt-toggle" onclick="toggleRealtime()">
+      🎥 Real-Time Detection — Click to open
+    </button>
+
+    <div class="rt-body" id="rt-body">
+      <div class="rt-video-wrap">
+        <video id="rt-video" autoplay playsinline muted></video>
+        <canvas id="rt-canvas"></canvas>
+        <div class="rt-overlay">
+          <div class="rt-status">
+            <span class="rt-dot idle" id="rt-dot"></span>
+            <span id="rt-label" style="color:#fff;">Idle</span>
+          </div>
+          <span class="rt-prob" id="rt-prob" style="color:#fff;">—</span>
+        </div>
+        <div class="rt-danger-bar" id="rt-danger-bar">🚨 ACCIDENT DETECTED</div>
+      </div>
+      <div class="rt-controls">
+        <div class="rt-info" id="rt-info">Click Start to begin webcam detection</div>
+        <button class="rt-btn" id="rt-start-btn" onclick="startDetection()">▶ Start</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script>
+    const dropZone  = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const preview   = document.getElementById('file-preview');
+    const submitBtn = document.getElementById('submit-btn');
+    const form      = document.getElementById('upload-form');
+    const progWrap  = document.getElementById('progress-wrap');
+
+    function onFileSelected(input) {
+      if (input.files && input.files[0]) {
+        const f  = input.files[0];
+        const mb = (f.size / 1024 / 1024).toFixed(1);
+        preview.style.display = 'block';
+        preview.textContent   = `📎  ${f.name}   (${mb} MB)`;
+      }
+    }
+
+    ['dragenter','dragover'].forEach(e =>
+      dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('dragover'); })
+    );
+    ['dragleave','drop'].forEach(e =>
+      dropZone.addEventListener(e, ev => {
+        ev.preventDefault(); dropZone.classList.remove('dragover');
+        if (ev.type === 'drop' && ev.dataTransfer.files.length) {
+          fileInput.files = ev.dataTransfer.files;
+          onFileSelected(fileInput);
+        }
+      })
+    );
+
+    form.addEventListener('submit', (e) => {
+      const sampleEvery = document.getElementById('sample_every').value;
+      const file = fileInput.files[0];
+      
+      if (sampleEvery === '1' && file && isVideoFile(file.name)) {
+        e.preventDefault();
+        startVisualProcessing(file);
+      } else {
+        submitBtn.disabled    = true;
+        submitBtn.textContent = 'Analysing…';
+        progWrap.style.display = 'block';
+      }
+    });
+
+    function isVideoFile(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      return ['mp4', 'avi', 'mov', 'mkv', 'wmv'].includes(ext);
+    }
+
+
+    /* ── Real-time webcam detection ── */
+    let rtStream   = null;
+    let rtInterval = null;
+    let rtRunning  = false;
+
+    const rtToggle    = document.getElementById('rt-toggle');
+    const rtBody      = document.getElementById('rt-body');
+    const rtVideo     = document.getElementById('rt-video');
+    const rtCanvas    = document.getElementById('rt-canvas');
+    const rtDot       = document.getElementById('rt-dot');
+    const rtLabel     = document.getElementById('rt-label');
+    const rtProb      = document.getElementById('rt-prob');
+    const rtInfo      = document.getElementById('rt-info');
+    const rtStartBtn  = document.getElementById('rt-start-btn');
+    const rtDangerBar = document.getElementById('rt-danger-bar');
+
+    function toggleRealtime() {
+      const isOpen = rtBody.classList.toggle('open');
+      rtToggle.classList.toggle('active', isOpen);
+      rtToggle.innerHTML = isOpen
+        ? '🎥 Real-Time Detection — Click to close'
+        : '🎥 Real-Time Detection — Click to open';
+      if (!isOpen && rtRunning) stopDetection();
+    }
+
+    async function startDetection() {
+      if (rtRunning) { stopDetection(); return; }
+
+      try {
+        rtStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: 'environment' },
+          audio: false,
+        });
+        rtVideo.srcObject = rtStream;
+        rtRunning = true;
+        rtStartBtn.textContent = '⏹ Stop';
+        rtStartBtn.classList.add('stop');
+        rtInfo.textContent = 'Detecting — ~2 FPS';
+        rtDot.className = 'rt-dot safe';
+        rtLabel.textContent = 'Normal';
+
+        rtInterval = setInterval(captureAndDetect, 500);
+
+      } catch (e) {
+        rtInfo.textContent = 'Camera access denied or unavailable.';
+        console.error('Webcam error:', e);
+      }
+    }
+
+    function stopDetection() {
+      rtRunning = false;
+      if (rtInterval) { clearInterval(rtInterval); rtInterval = null; }
+      if (rtStream) { rtStream.getTracks().forEach(t => t.stop()); rtStream = null; }
+      rtVideo.srcObject = null;
+      rtStartBtn.textContent = '▶ Start';
+      rtStartBtn.classList.remove('stop');
+      rtInfo.textContent = 'Detection stopped';
+      rtDot.className = 'rt-dot idle';
+      rtLabel.textContent = 'Idle';
+      rtProb.textContent = '—';
+      rtDangerBar.classList.remove('show');
+    }
+
+    async function captureAndDetect() {
+      if (!rtRunning || !rtVideo.videoWidth) return;
+
+      rtCanvas.width  = rtVideo.videoWidth;
+      rtCanvas.height = rtVideo.videoHeight;
+      const ctx = rtCanvas.getContext('2d');
+      ctx.drawImage(rtVideo, 0, 0);
+      const dataURL = rtCanvas.toDataURL('image/jpeg', 0.7);
+
+      try {
+        const resp = await fetch('/api/detect-frame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ frame: dataURL }),
+        });
+        const data = await resp.json();
+        if (data.error) { rtInfo.textContent = `Error: ${data.error}`; return; }
+
+        const pct = (data.probability * 100).toFixed(1);
+
+        if (data.is_accident) {
+          rtDot.className = 'rt-dot danger';
+          rtLabel.textContent = 'ACCIDENT';
+          rtLabel.style.color = '#ff6b6b';
+          rtProb.textContent = pct + '%';
+          rtProb.style.color = '#ff6b6b';
+          rtDangerBar.classList.add('show');
+        } else {
+          rtDot.className = 'rt-dot safe';
+          rtLabel.textContent = 'Normal';
+          rtLabel.style.color = '#2ec4b6';
+          rtProb.textContent = pct + '%';
+          rtProb.style.color = '#2ec4b6';
+          rtDangerBar.classList.remove('show');
+        }
+      } catch (e) {
+        console.error('Detection request failed:', e);
+      }
+    }
+
+
+    /* ── Frame-by-Frame Live visual processing ── */
+    let procVideo = null;
+    let procCanvas = null;
+    let procCtx = null;
+    let procAborted = false;
+    let procActive = false;
+
+    function startVisualProcessing(file) {
+      procAborted = false;
+      procActive = true;
+
+      // Show processing modal
+      const modal = document.getElementById('visual-proc-modal');
+      modal.style.display = 'flex';
+
+      // Setup canvas and hidden video element
+      procVideo = document.createElement('video');
+      procVideo.src = URL.createObjectURL(file);
+      procVideo.muted = true;
+      procVideo.playsInline = true;
+
+      procCanvas = document.getElementById('proc-canvas');
+      procCtx = procCanvas.getContext('2d');
+
+      // Reset statistics
+      document.getElementById('proc-stat-frames').textContent = '0 / --';
+      document.getElementById('proc-stat-prob').textContent = '0.0%';
+      document.getElementById('proc-stat-prob').style.color = 'var(--green)';
+      document.getElementById('proc-stat-flagged').textContent = '0';
+      document.getElementById('proc-progress-pct').textContent = '0%';
+      document.getElementById('proc-progress-fill').style.width = '0%';
+      document.getElementById('proc-warning-bar').style.transform = 'translateY(100%)';
+      document.getElementById('proc-fps-badge').textContent = 'Inference Active';
+
+      const email = document.getElementById('alert_email').value;
+      const phone = document.getElementById('alert_phone').value;
+
+      // Variables to accumulate metrics
+      let currentFrame = 0;
+      let fps = 25; // estimated default
+      let maxConfidence = 0.0;
+      let flaggedFrames = 0;
+      let bestEvidenceFrame = null;
+      let flaggedImages = [];
+      let accidentDetected = false;
+      
+      const sessionTimestamp = generateTimestamp();
+
+      procVideo.onloadedmetadata = () => {
+        const duration = procVideo.duration;
+        const totalFrames = Math.floor(duration * fps);
+        
+        procCanvas.width = procVideo.videoWidth;
+        procCanvas.height = procVideo.videoHeight;
+
+        document.getElementById('proc-stat-frames').textContent = `0 / ${totalFrames}`;
+
+        // Begin frame seek loop
+        processFrame();
+
+        async function processFrame() {
+          if (procAborted || currentFrame >= totalFrames) {
+            if (currentFrame >= totalFrames) {
+              completeProcessing();
+            }
+            return;
+          }
+
+          // Seek to time
+          const time = currentFrame / fps;
+          procVideo.currentTime = time;
+        }
+
+        procVideo.onseeked = async () => {
+          if (!procActive || procAborted) return;
+
+          // Draw the current video frame to hidden canvas
+          procCtx.drawImage(procVideo, 0, 0, procCanvas.width, procCanvas.height);
+          const base64 = procCanvas.toDataURL('image/jpeg', 0.7);
+
+          try {
+            // Post frame to server for AI inference and conditional image saving
+            const res = await fetch('/api/detect-frame', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                frame: base64,
+                save_accident_frame: true,
+                timestamp: sessionTimestamp,
+                frame_no: currentFrame + 1
+              })
+            });
+            const data = await res.json();
+
+            if (data.error) {
+              console.error("Frame processing error:", data.error);
+            } else {
+              const prob = data.probability;
+              const isAcc = data.is_accident;
+
+              // Accumulate stats
+              if (prob > maxConfidence) {
+                maxConfidence = prob;
+              }
+
+              if (isAcc) {
+                accidentDetected = true;
+                flaggedFrames++;
+                
+                // Add to flagged list (up to 12 frames)
+                if (data.saved_path && flaggedImages.length < 12) {
+                  flaggedImages.push(data.saved_path);
+                }
+
+                // Update best evidence frame
+                if (prob >= maxConfidence) {
+                  bestEvidenceFrame = data.saved_path;
+                }
+              }
+
+              // Update visual feedback on the canvas
+              drawVisualFeedback(isAcc, prob, currentFrame + 1);
+
+              // Update text indicators
+              document.getElementById('proc-stat-frames').textContent = `${currentFrame + 1} / ${totalFrames}`;
+              document.getElementById('proc-stat-prob').textContent = `${(prob * 100).toFixed(1)}%`;
+              document.getElementById('proc-stat-prob').style.color = isAcc ? 'var(--accent)' : 'var(--green)';
+              document.getElementById('proc-stat-flagged').textContent = flaggedFrames;
+
+              if (accidentDetected) {
+                document.getElementById('proc-warning-bar').style.transform = 'translateY(0)';
+              }
+
+              // Update progress bar
+              const pct = Math.round(((currentFrame + 1) / totalFrames) * 100);
+              document.getElementById('proc-progress-pct').textContent = `${pct}%`;
+              document.getElementById('proc-progress-fill').style.width = `${pct}%`;
+            }
+
+            currentFrame++;
+            processFrame();
+
+          } catch (err) {
+            console.error("Request failed:", err);
+            // Skip frame and continue
+            currentFrame++;
+            processFrame();
+          }
+        };
+
+        async function completeProcessing() {
+          procActive = false;
+          document.getElementById('proc-fps-badge').textContent = 'Saving results...';
+
+          const resultsPayload = {
+            timestamp: sessionTimestamp,
+            filename: file.name,
+            accident_detected: accidentDetected,
+            max_confidence: maxConfidence,
+            total_frames: totalFrames,
+            flagged_frames: flaggedFrames,
+            best_evidence_frame: bestEvidenceFrame || (flaggedImages.length > 0 ? flaggedImages[0] : null),
+            flagged_images: flaggedImages,
+            alert_email: email,
+            alert_phone: phone
+          };
+
+          try {
+            const saveRes = await fetch('/api/save-client-results', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(resultsPayload)
+            });
+            const saveData = await saveRes.json();
+
+            if (saveData.success) {
+              window.location.href = '/results/' + sessionTimestamp;
+            } else {
+              alert('Failed to save history: ' + saveData.error);
+              closeProcModal();
+            }
+          } catch (err) {
+            console.error("Failed to finalize results:", err);
+            alert('Failed to save processing results.');
+            closeProcModal();
+          }
+        }
+      };
+    }
+
+    function abortVisualProcessing() {
+      procAborted = true;
+      procActive = false;
+      closeProcModal();
+    }
+
+    function closeProcModal() {
+      const modal = document.getElementById('visual-proc-modal');
+      modal.style.display = 'none';
+      if (procVideo) {
+        procVideo.src = '';
+        procVideo = null;
+      }
+    }
+
+    function generateTimestamp() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return now.getFullYear() +
+        pad(now.getMonth() + 1) +
+        pad(now.getDate()) + '_' +
+        pad(now.getHours()) +
+        pad(now.getMinutes()) +
+        pad(now.getSeconds());
+    }
+
+    function drawVisualFeedback(isAccident, probability, frameNo) {
+      const w = procCanvas.width;
+      const h = procCanvas.height;
+
+      // Border frame highlight
+      procCtx.lineWidth = Math.max(4, Math.floor(w / 100));
+      procCtx.strokeStyle = isAccident ? '#e63946' : '#2ec4b6';
+      procCtx.strokeRect(procCtx.lineWidth/2, procCtx.lineWidth/2, w - procCtx.lineWidth, h - procCtx.lineWidth);
+
+      // Top banner overlay
+      const bannerHeight = Math.max(30, Math.floor(h / 12));
+      procCtx.fillStyle = 'rgba(8, 11, 18, 0.85)';
+      procCtx.fillRect(0, 0, w, bannerHeight);
+
+      procCtx.fillStyle = isAccident ? '#ff6b6b' : '#2ec4b6';
+      const fontSize1 = Math.max(12, Math.floor(bannerHeight * 0.45));
+      procCtx.font = `bold ${fontSize1}px Inter, sans-serif`;
+      const label = isAccident ? `ACCIDENT DETECTED (${(probability * 100).toFixed(1)}%)` : `Normal Traffic`;
+      procCtx.fillText(label, 20, bannerHeight * 0.65);
+
+      procCtx.fillStyle = '#6b7694';
+      const fontSize2 = Math.max(10, Math.floor(bannerHeight * 0.35));
+      procCtx.font = `${fontSize2}px Space Mono, monospace`;
+      procCtx.fillText(`Frame ${frameNo}`, w - 120, bannerHeight * 0.65);
+    }
+  </script>
+</body>
+</html>

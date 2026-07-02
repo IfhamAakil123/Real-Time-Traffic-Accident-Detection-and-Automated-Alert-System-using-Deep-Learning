@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detection History — AccidentDetect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080b12;
+      --surface: #0f1320;
+      --glass: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #e63946;
+      --green: #2ec4b6;
+      --amber: #f4a261;
+      --text: #eef0f6;
+      --muted: #6b7694;
+      --sans: 'Inter', sans-serif;
+      --mono: 'Space Mono', monospace;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8, 11, 18, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--accent), #a31621);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 0 14px rgba(230, 57, 70, 0.35);
+    }
+
+    .logo-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .logo-tag {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .btn-back {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: var(--sans);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-back:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 36px 32px 60px;
+    }
+
+    /* ── Page header row ── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .page-header-left {}
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff 40%, #7a82a8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-sub {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    /* ── Clear button ── */
+    .btn-clear {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      background: rgba(230, 57, 70, 0.08);
+      border: 1px solid rgba(230, 57, 70, 0.2);
+      color: var(--accent);
+      border-radius: 10px;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-clear:hover {
+      background: rgba(230, 57, 70, 0.15);
+      border-color: rgba(230, 57, 70, 0.35);
+    }
+
+    .btn-clear:active {
+      transform: scale(0.97);
+    }
+
+    /* ── Flash messages ── */
+    .flash-wrap {
+      margin-bottom: 18px;
+    }
+
+    .flash {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+    }
+
+    .flash.success {
+      background: rgba(46, 196, 182, 0.1);
+      border: 1px solid rgba(46, 196, 182, 0.25);
+      color: #81e6d9;
+    }
+
+    .flash.error {
+      background: rgba(230, 57, 70, 0.1);
+      border: 1px solid rgba(230, 57, 70, 0.25);
+      color: #fca5a5;
+    }
+
+    /* ── Confirmation Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px 36px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      animation: modalIn 0.25s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.92) translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-icon {
+      font-size: 2.8rem;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .modal-btn {
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      border: none;
+    }
+
+    .modal-btn:active {
+      transform: scale(0.97);
+    }
+
+    .modal-btn.cancel {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .modal-btn.cancel:hover {
+      color: var(--text);
+    }
+
+    .modal-btn.danger {
+      background: linear-gradient(135deg, var(--accent), #a31621);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(230, 57, 70, 0.25);
+    }
+
+    .modal-btn.danger:hover {
+      opacity: 0.9;
+    }
+
+    /* ── Summary row ── */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .summary-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+
+    .summary-num {
+      font-family: var(--mono);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .summary-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 12px 18px;
+      text-align: left;
+      font-size: 10px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    tbody td {
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    tbody td.mono {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-danger {
+      background: rgba(230, 57, 70, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(230, 57, 70, 0.25);
+    }
+
+    .badge-safe {
+      background: rgba(46, 196, 182, 0.1);
+      color: var(--green);
+      border: 1px solid rgba(46, 196, 182, 0.2);
+    }
+
+    .badge-error {
+      background: rgba(244, 162, 97, 0.1);
+      color: var(--amber);
+      border: 1px solid rgba(244, 162, 97, 0.2);
+    }
+
+    .conf-bar {
+      width: 60px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 6px;
+      overflow: hidden;
+    }
+
+    .conf-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .conf-fill.high {
+      background: var(--accent);
+    }
+
+    .conf-fill.medium {
+      background: var(--amber);
+    }
+
+    .conf-fill.low {
+      background: var(--green);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 14px;
+      opacity: 0.4;
+    }
+
+    .empty p {
+      font-size: 0.95rem;
+    }
+
+    .empty a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    @media (max-width: 700px) {
+      .page {
+        padding: 20px 16px;
+      }
+
+      header {
+        padding: 16px 20px;
+      }
+
+      .summary-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      td.hide-sm,
+      th.hide-sm {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <div class="logo-icon">AD</div>
+      <div>
+        <div class="logo-name">AccidentDetect</div>
+        <div class="logo-tag">Road Safety AI</div>
+      </div>
+    </a>
+    <a href="/" class="btn-back">← New Detection</a>
+  </header>
+
+  <div class="page">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-wrap">
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-title">Detection History</div>
+        <div class="page-sub">Last {{ records|length }} detection{{ 's' if records|length != 1 else '' }} — newest first
+        </div>
+      </div>
+      {% if records %}
+      <button class="btn-clear" onclick="showClearModal()">🗑️ Clear All History</button>
+      {% endif %}
+    </div>
+
+    {% if records %}
+    {% set accidents = records | selectattr('accident_detected') | list %}
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="summary-num">{{ records|length }}</div>
+        <div class="summary-desc">Total detections</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:var(--accent);">{{ accidents|length }}</div>
+        <div class="summary-desc">Accidents found</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:var(--green);">{{ records|length - accidents|length }}</div>
+        <div class="summary-desc">Clear results</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Evidence</th>
+            <th>File</th>
+            <th>Status</th>
+            <th>Confidence</th>
+            <th class="hide-sm">Frames</th>
+            <th class="hide-sm">Flagged</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr onclick="window.location.href='/results/{{ r.timestamp }}'">
+            <td class="mono">{{ r.timestamp }}</td>
+            <td>
+              {% if r.best_evidence_frame %}
+              <img src="/static/{{ r.best_evidence_frame }}"
+                style="width: 60px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block;"
+                alt="Evidence">
+              {% elif r.thumbnail_path %}
+              <img src="/{{ r.thumbnail_path }}"
+                style="width: 60px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block;"
+                alt="Evidence">
+              {% elif r.flagged_images and r.flagged_images|length > 0 %}
+              <img src="/static/{{ r.flagged_images[0] }}"
+                style="width: 60px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block;"
+                alt="Evidence">
+              {% else %}
+              <span style="font-size: 10px; color: var(--muted); font-family: var(--mono);">N/A</span>
+              {% endif %}
+            </td>
+            <td>{{ r.get('original_filename', r.get('filename', 'N/A'))[:30] }}</td>
+            <td>
+              {% if r.status == 'accident_detected' %}
+              <span class="badge badge-danger">🚨 Accident</span>
+              {% elif r.status == 'error' %}
+              <span class="badge badge-error">⚠ Error</span>
+              {% else %}
+              <span class="badge badge-safe">✓ Safe</span>
+              {% endif %}
+            </td>
+            <td>
+              {% set pct = (r.max_confidence * 100)|int %}
+              {% set cls = 'high' if pct >= 70 else ('medium' if pct >= 40 else 'low') %}
+              {{ pct }}%
+              <span class="conf-bar"><span class="conf-fill {{ cls }}" style="width:{{ pct }}%;"></span></span>
+            </td>
+            <td class="hide-sm mono">{{ r.total_frames }}</td>
+            <td class="hide-sm mono">{{ r.flagged_frames }}</td>
+            <td>
+              <button class="btn-clear"
+                style="padding: 5px 10px; font-size: 11px; background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.2); margin: 0;"
+                onclick="event.stopPropagation(); showSingleDeleteModal('{{ r.timestamp }}', '{{ r.get('original_filename', r.get('filename', 'N/A'))|replace('\'', '\\\'') }}')">🗑️
+                Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">📭</div>
+      <p>No detections yet.<br><a href="/">Upload a video or image</a> to get started.</p>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Clear History Confirmation Modal -->
+  <div class="modal-overlay" id="clear-modal">
+    <div class="modal-box">
+      <div class="modal-icon">🗑️</div>
+      <div class="modal-title">Clear All History?</div>
+      <div class="modal-desc">
+        This will permanently delete all {{ records|length }} detection record{{ 's' if records|length != 1 else '' }}.
+        This action cannot be undone.
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="hideClearModal()">Cancel</button>
+        <form action="/history/clear" method="POST" style="display:inline;">
+          <button type="submit" class="modal-btn danger">🗑️ Delete All</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Single Item Confirmation Modal -->
+  <div class="modal-overlay" id="delete-single-modal">
+    <div class="modal-box">
+      <div class="modal-icon">🗑️</div>
+      <div class="modal-title">Delete History Record?</div>
+      <div class="modal-desc" style="line-height: 1.6; margin-bottom: 24px;">
+        This will permanently delete the record for:
+        <br><strong id="delete-filename"
+          style="color: var(--accent); font-family: var(--mono); font-size: 13px;"></strong>
+        <br>This action cannot be undone.
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="hideSingleDeleteModal()">Cancel</button>
+        <form id="delete-single-form" action="" method="POST" style="display:inline;">
+          <button type="submit" class="modal-btn danger">🗑️ Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const clearModal = document.getElementById('clear-modal');
+    const singleModal = document.getElementById('delete-single-modal');
+    const deleteFilename = document.getElementById('delete-filename');
+    const deleteForm = document.getElementById('delete-single-form');
+
+    function showClearModal() {
+      clearModal.classList.add('open');
+    }
+    function hideClearModal() {
+      clearModal.classList.remove('open');
+    }
+
+    function showSingleDeleteModal(timestamp, filename) {
+      deleteFilename.textContent = filename;
+      deleteForm.action = '/history/delete/' + timestamp;
+      singleModal.classList.add('open');
+    }
+    function hideSingleDeleteModal() {
+      singleModal.classList.remove('open');
+    }
+
+    // Close on overlay click
+    clearModal.addEventListener('click', (e) => {
+      if (e.target === clearModal) hideClearModal();
+    });
+    singleModal.addEventListener('click', (e) => {
+      if (e.target === singleModal) hideSingleDeleteModal();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        hideClearModal();
+        hideSingleDeleteModal();
+      }
+    });
+  </script>
+</body>
+
+</html>
