@@ -1,0 +1,2 @@
+# Real-Time-Traffic-Accident-Detection-and-Automated-Alert-System-using-Deep-Learning
+This project presents a lightweight accident detection system using deep learning and computer vision. A CNN detects road accidents from images and video frames with preprocessing, temporal smoothing, and real-time alerts. It achieves high accuracy while supporting efficient traffic monitoring and emergency response.
