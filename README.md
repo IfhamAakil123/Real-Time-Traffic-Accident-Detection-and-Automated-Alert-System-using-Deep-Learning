@@ -139,3 +139,4 @@ To change the detection threshold, edit model_config.json:
 ```
 Lower = more sensitive (more false positives)
 Higher = less sensitive (may miss some accidents)
+<img width="966" height="884" alt="image" src="https://github.com/user-attachments/assets/89928415-8337-4cb1-a6ba-368de3dcfee8" />
