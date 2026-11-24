@@ -140,3 +140,14 @@ To change the detection threshold, edit model_config.json:
 Lower = more sensitive (more false positives)
 Higher = less sensitive (may miss some accidents)
 <img width="966" height="884" alt="image" src="https://github.com/user-attachments/assets/89928415-8337-4cb1-a6ba-368de3dcfee8" />
+<img width="1030" height="457" alt="image" src="https://github.com/user-attachments/assets/7a6ed001-19ad-4f43-bac4-691e3c4ea2de" />
+<img width="490" height="1099" alt="image" src="https://github.com/user-attachments/assets/afd1af33-0ebf-45b1-a065-2fbd07f3dae0" />
+<img width="966" height="673" alt="image" src="https://github.com/user-attachments/assets/42aeeef8-3a68-441c-b6c9-d4ee90ced30f" />
+<img width="907" height="822" alt="image" src="https://github.com/user-attachments/assets/dafd4052-6d54-4afc-8114-bacf4c8cdc01" />
+<img width="966" height="658" alt="image" src="https://github.com/user-attachments/assets/e7cadf01-4b1a-45e4-b88d-0d2eb05b4f1a" />
+<img width="963" height="629" alt="image" src="https://github.com/user-attachments/assets/b91789f6-4a9f-4f6d-8710-ef289f44f276" />
+https://github.com/user-attachments/assets/cbedf32c-5586-4e7d-9030-6c3d743ec7b4
+https://github.com/user-attachments/assets/e98f7191-37df-4355-aea7-c8c692194dac
+
+
+
